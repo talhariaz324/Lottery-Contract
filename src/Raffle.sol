@@ -22,7 +22,7 @@
 // view & pure functions
 
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 // Imports
 
 import {VRFConsumerBaseV2Plus} from
@@ -162,6 +162,10 @@ contract Raffle is VRFConsumerBaseV2Plus {
     /* GETTER FUNCTIONS */
     function getEntranceFee() public view returns (uint256) {
         return i_entranceFee;
+    }
+
+    function getRaffleState() public view returns (RaffleState) {
+        return s_raffleState;
     }
 }
 

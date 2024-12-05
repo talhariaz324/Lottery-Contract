@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity 0.8.19;
 
 import {Script} from "forge-std/Script.sol";
 
@@ -61,7 +61,7 @@ contract HelperConfig is Script, CodConstants {
         }
     }
 
-    function getConfig() public view returns (NetworkConfig memory) {
+    function getConfig() public  returns (NetworkConfig memory) {
         return getConfigByChainId(block.chainid); //* block.chainid is the chain id of the chain that the contract is deployed on, If local then retrun local config
     }
 
@@ -79,7 +79,7 @@ contract HelperConfig is Script, CodConstants {
         VRFCoordinatorV2_5Mock vrfCoordinatorMock = new VRFCoordinatorV2_5Mock(
             DEFAULT_ANVIL_BASE_FEE,
             DEFAULT_ANVIL_GAS_PRICE,
-            DEFAULT_ANVIL_LINK_PER_ETH
+            int256(DEFAULT_ANVIL_LINK_PER_ETH)
         );  //* This requries  base fee, gas price, and link per eth
 
         vm.stopBroadcast();
