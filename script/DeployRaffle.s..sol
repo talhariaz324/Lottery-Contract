@@ -7,7 +7,6 @@ import {HelperConfig} from "./HelperConfig.s.sol";
 
 /* //* Flow: 1) Deploy the contract on Sepolia or local network 2) Use the deployment for testing */
 
-
 contract DeployRaffle is Script {
     //* Entry point for the script;
     function run() external {
@@ -15,16 +14,16 @@ contract DeployRaffle is Script {
     }
 
     //* Script for deploying the contract
-    function deployContract() public returns (Raffle, HelperConfig) { //* HelperConfig provides network-specific configurations, such as mocks for local or specific settings for testnets (e.g., Sepolia) or mainnet.
-
+    function deployContract() public returns (Raffle, HelperConfig) {
+        //* HelperConfig provides network-specific configurations, such as mocks for local or specific settings for testnets (e.g., Sepolia) or mainnet.
         HelperConfig helperConfig = new HelperConfig();
-       /* //* Retrieves the appropriate configuration based on the target chain uses block.chainid and this would be based on which chain the script is running on --> definately we need to deply script to seploia in order to get the sepolia config
+        /* //* Retrieves the appropriate configuration based on the target chain uses block.chainid and this would be based on which chain the script is running on --> definately we need to deply script to seploia in order to get the sepolia config
        //* If local, it deploys mocks (e.g., mock VRFCoordinator). 
        //* If Sepolia, it uses pre-defined Sepolia configurations. */
 
         HelperConfig.NetworkConfig memory networkConfig = helperConfig.getConfig();
 
-       //* Deploys the Raffle contract using the network-specific configuration.
+        //* Deploys the Raffle contract using the network-specific configuration.
 
         vm.startBroadcast();
         Raffle raffle = new Raffle(
@@ -39,5 +38,4 @@ contract DeployRaffle is Script {
 
         return (raffle, helperConfig);
     }
-
 }
