@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.19;
+pragma solidity ^0.8.18;
 
 import {Script} from "forge-std/Script.sol";
 
 import {VRFCoordinatorV2_5Mock} from
     "lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 
+
+import {LinkToken} from "../test/mocks/LinkToken.sol";
 //* Chainids are constants and you can get them from the internet
 
 abstract contract CodConstants {
@@ -27,6 +29,7 @@ contract HelperConfig is Script, CodConstants {
         bytes32 gasLane;
         uint32 callbackGasLimit;
         uint256 subscriptionId;
+        address link;
     }
 
     NetworkConfig public localNetworkConfig;
@@ -46,7 +49,8 @@ contract HelperConfig is Script, CodConstants {
             vrfCoordinator: 0xD7f86b4b8Cae7D942340FF628F82735b7a20893a,
             gasLane: 0x8077df514608a09f83e4e8d300645594e5d7234665448ba83f51a50f842bd3d9,
             callbackGasLimit: 500000,
-            subscriptionId: 0 //* Auto increment by the script
+            subscriptionId: 0, //* Auto increment by the script
+            link: 0x779877A7B0D9E8603169DdbD7836e478b4624789 //* Token of link needed to fund the subscription from chainlink for sepolia
         });
     }
 
@@ -79,6 +83,7 @@ contract HelperConfig is Script, CodConstants {
             DEFAULT_ANVIL_BASE_FEE, DEFAULT_ANVIL_GAS_PRICE, int256(DEFAULT_ANVIL_LINK_PER_ETH)
         ); //* This requries  base fee, gas price, and link per eth
 
+        LinkToken linkToken = new LinkToken();
         vm.stopBroadcast();
 
         localNetworkConfig = NetworkConfig({
@@ -88,7 +93,8 @@ contract HelperConfig is Script, CodConstants {
             /* does not matter for anvil */
             gasLane: 0x8077df514608a09f83e4e8d300645594e5d7234665448ba83f51a50f842bd3d9,
             callbackGasLimit: 500000,
-            subscriptionId: 0 // might to fix
+            subscriptionId: 0, // might to fix
+            link: address(linkToken) //* Link token address mocked for local purposes
         });
 
         return localNetworkConfig;

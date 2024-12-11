@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity ^0.8.18;
 
 import {Raffle} from "../src/Raffle.sol";
 import {Script} from "forge-std/Script.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
-
+import {CreateSubscription, FundSubscription, AddConsumer} from "./Interactions.s.sol";
 /* //* Flow: 1) Deploy the contract on Sepolia or local network 2) Use the deployment for testing */
 
 contract DeployRaffle is Script {
     //* Entry point for the script;
     function run() external {
-        vm.startBroadcast();
+        deployContract();
     }
 
     //* Script for deploying the contract
@@ -22,6 +22,23 @@ contract DeployRaffle is Script {
        //* If Sepolia, it uses pre-defined Sepolia configurations. */
 
         HelperConfig.NetworkConfig memory networkConfig = helperConfig.getConfig();
+
+        if(networkConfig.subscriptionId == 0) {
+            //* If subscription id is 0 (default), then we need to create a subscription
+            CreateSubscription createSubscription = new CreateSubscription();
+            (networkConfig.subscriptionId, networkConfig.vrfCoordinator) = createSubscription.createSubscriptionUsingConfig();
+            //* Equilent to
+            // (uint2566 subId, address vrfCoordinator) = createSubscription.createSubscriptionUsingConfig();
+            // networkConfig.subscriptionId = subId;
+            // networkConfig.vrfCoordinator = vrfCoordinator;
+
+            //* We created the subs and now need to fund the subscription and then add consumer to the subscription in order to get the random number
+
+            // FUNDS IT!
+            FundSubscription fundSubscription = new FundSubscription();
+            fundSubscription.fundSubscription(networkConfig.vrfCoordinator, networkConfig.subscriptionId, networkConfig.link);
+            
+        }
 
         //* Deploys the Raffle contract using the network-specific configuration.
 
@@ -36,6 +53,11 @@ contract DeployRaffle is Script {
         );
         vm.stopBroadcast();
 
+        //* After deployment of the contract we need to add it as a consumer to the vrf coordinator
+
+        AddConsumer addConsumer = new AddConsumer();
+        //* Dont need to broadcast as the addConsumer function have vm.startBroadcast() and vm.stopBroadcast()
+        addConsumer.addConsumer(address(raffle), networkConfig.vrfCoordinator, networkConfig.subscriptionId);
         return (raffle, helperConfig);
     }
 }

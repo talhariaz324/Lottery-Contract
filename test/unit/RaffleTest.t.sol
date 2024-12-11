@@ -79,7 +79,9 @@ contract RaffleTest is Test {
         raffle.enterRaffle{value: entranceFee}();
     }
 
-
+/* //* This test fails because there is no consumer for the subscription of random number in performupkeep function in contract. 
+    //* VRF uses subscription to get random number and we need to set up a consumer for the subscription. So that who pays for the subscription can get the random number only using that consumer.
+    //* We have to make the subscription in the script while deploying the contract based on the block.chainid
     function testDontAllowPlayersToEnterWhileRaffleIsCalculating() public {
         // Set the sender of the next transaction to PLAYER
         vm.prank(PLAYER);
@@ -93,6 +95,32 @@ contract RaffleTest is Test {
         
         // Perform upkeep to transition the raffle state to CALCULATING and for this function we need to set time and block number as well as it has if when it starts
         raffle.performUpkeep("");
+
+        // Expect the next transaction to revert with the specific error Raffle__RaffleNotOpen
+        vm.expectRevert(Raffle.Raffle__RaffleNotOpen.selector);
+        // Set the sender of the next transaction to PLAYER
+        vm.prank(PLAYER);
+        // Attempt to enter the raffle while it is in the CALCULATING state, which should revert
+        raffle.enterRaffle{value: entranceFee}();
+    }
+
+    */
+
+
+   //* After making subs and funds and consumer we need to test again the dontAllowPlayersToEnterWhileRaffleIsCalculating function (same as  above)
+   function testDontAllowPlayersToEnterWhileRaffleIsCalculating() public {
+        // Set the sender of the next transaction to PLAYER
+        vm.prank(PLAYER);
+        // PLAYER enters the raffle by sending the entrance fee
+        raffle.enterRaffle{value: entranceFee}();
+        
+        // Fast forward the blockchain's timestamp by the interval plus 1 second using vm.warp cheat
+        vm.warp(block.timestamp + interval + 1);
+        // Move the blockchain's block number forward by 1 using vm.roll cheat as time passed so need to update the block number as well
+        vm.roll(block.number + 1);
+        
+        // Perform upkeep to transition the raffle state to CALCULATING and for this function we need to set time and block number as well as it has if when it starts
+        raffle.performUpkeep(""); //* Function of the raffle contract that uses the vrf to get the random number and vrf need subscription and consumer to get the random number
 
         // Expect the next transaction to revert with the specific error Raffle__RaffleNotOpen
         vm.expectRevert(Raffle.Raffle__RaffleNotOpen.selector);

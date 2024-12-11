@@ -22,7 +22,7 @@
 // view & pure functions
 
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity ^0.8.18;
 // Imports
 
 import {VRFConsumerBaseV2Plus} from
