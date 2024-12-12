@@ -5,6 +5,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {Raffle} from "../../src/Raffle.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
 import {DeployRaffle} from "../../script/DeployRaffle.s..sol";
+import {Vm} from "forge-std/Vm.sol";
 
 contract RaffleTest is Test {
     Raffle public raffle;
@@ -129,4 +130,130 @@ contract RaffleTest is Test {
         // Attempt to enter the raffle while it is in the CALCULATING state, which should revert
         raffle.enterRaffle{value: entranceFee}();
     }
+
+    // CHECKUPKEEP
+    function testCheckUpkeepReturnsFalseIfItHasNoBalance() public {
+        //* Arrange
+        // SKIP ENNTRANCE OF PLAYER
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+
+        //* Act
+        (bool upkeepNeeded, ) = raffle.checkUpkeep("");
+        //* Assert
+        assert(!upkeepNeeded);
+    }
+
+    function testCheckUpkeepReturnsFalseIfRaffleIsNotOpen() public {
+        //* Arrange
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+        raffle.performUpkeep("");
+
+        //* Act
+        (bool upkeepNeeded, ) = raffle.checkUpkeep("");
+        //* Assert
+        assert(!upkeepNeeded);
+    }
+
+    function testCheckUpkeepReturnsFalseIfEnoughTimeHasNotPassed() public {
+        // Arrange
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        
+        // Act
+        (bool upkeepNeeded, ) = raffle.checkUpkeep("");
+        
+        // Assert
+        assert(!upkeepNeeded);
+    }
+
+    function testCheckUpkeepReturnsTrueWhenParametersAreGood() public {
+        // Arrange
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+        
+        // Act
+        (bool upkeepNeeded, ) = raffle.checkUpkeep("");
+        
+        // Assert
+        assert(upkeepNeeded);
+    }
+
+    // PERFORMUPKEEP
+
+    function testPerformUpkeepCanOnlyRunIfCheckUpkeepIsTrue() public {
+        // Arrange
+        // parmas for checkUpkeep returns true
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+
+        // Act / Assert
+        raffle.performUpkeep(""); //* This will revert if checkUpkeep returns false but it also sends true means assert is true (success)
+    }
+    
+    function testPerformUpkeepRevertsIfCheckUpkeepReturnsFalse() public {
+        // Arrange
+        // parmas for the revert function in performUpkeep
+        uint256 currentBalance = 0;
+        uint256 numPlayers = 0;
+        Raffle.RaffleState raffleState = raffle.getRaffleState();
+
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        // Miss the checkupkeep params so return false
+        //*Update params of performUpkeep reverts function with player data
+        currentBalance = currentBalance + entranceFee;
+        numPlayers = numPlayers + 1;
+        // SKIP RAFFLE STATE intentionally, no need to update it
+
+        // Act / Assert and this expectRevert with params so we need to pass the params in the expectRevert syntax known as "abi.encodeWithSelector"
+        vm.expectRevert(abi.encodeWithSelector(Raffle.Raffle__UpkeepNotNeeded.selector, currentBalance, numPlayers, raffleState));
+        raffle.performUpkeep("");
+    }
+    
+    modifier raffleEntered{
+         // Arrange
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+        _; //* This make sure that the modifier is executed before the test
+    }
+
+    // What if we need to get data from emitted events in our tests?   
+    function testPerformUpkeepUpdatesRaffleStateAndEmitsRequestId() public raffleEntered {
+       //* As Arrange is too much same in most of tests so make its modifier is good practice
+    
+        // Act
+        vm.recordLogs(); //* This is a cheat to record the events emitted in the next function which is here performUpkeep
+        raffle.performUpkeep("");
+        //* For getting the events we need to use the logs and we need to decode the logs using array
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+        // Logs  Strucute:
+        
+         /*  
+         struct Log {
+        //* The topics of the log, including the signature, if any. means params of events
+        bytes32[] topics;
+        //* The raw data of the log.
+        bytes data;
+        //* The address of the log's emitter.
+        address emitter;
+    }
+         */
+        bytes32 requestId = entries[1].topics[1]; // here entries is using index 1 because 0 index event is released by the VRF itself and topics is 1 also becuase 0 index is fixed by foundry for some other purpose. In short enteris[1] pick the log emit by your contract and topics[1] pick the requestId from the log that you emitt with event
+
+        //* Assert
+        Raffle.RaffleState raffleState = raffle.getRaffleState();
+        assert(uint256(requestId) > 0); //* This is to check if the requestId is greater than 0 mean requestId is exists
+        assert(uint256(raffleState) == uint256(Raffle.RaffleState.CALCULATING)); //* This is to check if the raffleState is CALCULATING
+    }
 }
+ 
