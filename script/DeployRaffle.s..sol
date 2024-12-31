@@ -36,13 +36,14 @@ contract DeployRaffle is Script {
 
             // FUNDS IT!
             FundSubscription fundSubscription = new FundSubscription();
-            fundSubscription.fundSubscription(networkConfig.vrfCoordinator, networkConfig.subscriptionId, networkConfig.link);
+            address account = helperConfig.getConfig().account;
+            fundSubscription.fundSubscription(networkConfig.vrfCoordinator, networkConfig.subscriptionId, networkConfig.link, account);
             
         }
 
         //* Deploys the Raffle contract using the network-specific configuration.
 
-        vm.startBroadcast();
+        vm.startBroadcast(networkConfig.account);
         Raffle raffle = new Raffle(
             networkConfig.entranceFee,
             networkConfig.interval,
@@ -55,9 +56,10 @@ contract DeployRaffle is Script {
 
         //* After deployment of the contract we need to add it as a consumer to the vrf coordinator
 
+        address account = helperConfig.getConfig().account;
         AddConsumer addConsumer = new AddConsumer();
         //* Dont need to broadcast as the addConsumer function have vm.startBroadcast() and vm.stopBroadcast()
-        addConsumer.addConsumer(address(raffle), networkConfig.vrfCoordinator, networkConfig.subscriptionId);
+        addConsumer.addConsumer(address(raffle), networkConfig.vrfCoordinator, networkConfig.subscriptionId, account);
         return (raffle, helperConfig);
     }
 }

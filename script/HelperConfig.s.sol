@@ -30,6 +30,7 @@ contract HelperConfig is Script, CodConstants {
         uint32 callbackGasLimit;
         uint256 subscriptionId;
         address link;
+        address account;
     }
 
     NetworkConfig public localNetworkConfig;
@@ -50,7 +51,8 @@ contract HelperConfig is Script, CodConstants {
             gasLane: 0x8077df514608a09f83e4e8d300645594e5d7234665448ba83f51a50f842bd3d9,
             callbackGasLimit: 500000,
             subscriptionId: 0, //* Auto increment by the script
-            link: 0x779877A7B0D9E8603169DdbD7836e478b4624789 //* Token of link needed to fund the subscription from chainlink for sepolia
+            link: 0x779877A7B0D9E8603169DdbD7836e478b4624789, //* Token of link needed to fund the subscription from chainlink for sepolia
+            account: 0x3019cc5D1D347f58e7FD8F79d090cb4133173b95 //* MINE WALLET ADDRESS for when we fork sepolia chain testing then it work
         });
     }
 
@@ -77,7 +79,7 @@ contract HelperConfig is Script, CodConstants {
         //* IF not, then make the config. But if we are deploying locally then we need to have mock vrf coordinator and it comes from the chainlink brownie contracts, GREAT
         // Deploy mocks vrfCoordinatior and such
         // vrfCoordinator is the node on the chain that will be responsible for coordinating the random number generation and the payment
-        vm.startBroadcast(); //* For sending transactions to blockchain from contract and make the blockchain feels as sends by the eth address (some sender)
+        vm.startBroadcast( ); //* For sending transactions to blockchain from contract and make the blockchain feels as sends by the eth address (some sender)
         // Deploying mock vrfcoordinator to anvil
         VRFCoordinatorV2_5Mock vrfCoordinatorMock = new VRFCoordinatorV2_5Mock(
             DEFAULT_ANVIL_BASE_FEE, DEFAULT_ANVIL_GAS_PRICE, int256(DEFAULT_ANVIL_LINK_PER_ETH)
@@ -94,7 +96,8 @@ contract HelperConfig is Script, CodConstants {
             gasLane: 0x8077df514608a09f83e4e8d300645594e5d7234665448ba83f51a50f842bd3d9,
             callbackGasLimit: 500000,
             subscriptionId: 0, // might to fix
-            link: address(linkToken) //* Link token address mocked for local purposes
+            link: address(linkToken), //* Link token address mocked for local purposes
+            account: 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38 //*Base .sol DEFAULT_SENDER
         });
 
         return localNetworkConfig;

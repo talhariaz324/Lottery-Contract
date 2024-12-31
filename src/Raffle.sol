@@ -167,6 +167,14 @@ contract Raffle is VRFConsumerBaseV2Plus {
     function getPlayer(uint256 index) public view returns (address) {
         return s_players[index];
     }
+
+    function getLastTimeStamp() public view returns (uint256) {
+        return s_lastTimeStamp;
+    }
+
+    function getRecentWinner() public view returns (address) {
+        return s_recentWinner;
+    }
 }
 
 //* Chainlink is the oracle network and we used the VRF feature of chainlink to get the random number /* Steps: 1) Make Subscription 2) Fund Subscription  3) Deploy Consumer Contract 4) Create Request 5) Chainlink Node will give the random number */
